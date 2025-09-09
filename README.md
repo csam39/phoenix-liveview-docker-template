@@ -23,13 +23,11 @@ Then inside the Dev Container terminal:
 Run inside the Dev Container at `/app`:
 
 mix phx.gen.secret  # copy output into .env.dev as SECRET_KEY_BASE (See Environment section below for full file example)
-./scripts/rename_app.sh MyStore my_store (You can rename the generated app (default: :app / App) to anything. Run this inside the Dev Container at /app.)
+./scripts/rename_app.sh MyStore my_store (You can rename the generated app (default: :app / App) to anything with this script. This updates module names (App → MyStore), OTP app (:app → :my_store), folder names, and DB names (app_dev → my_store_dev).)
 rm -rf _build deps priv/static/assets
 mix deps.get && mix compile
 mix ecto.create
 mix phx.server
-
-This updates module names (App → MyStore), OTP app (:app → :my_store), folder names, and DB names (app_dev → my_store_dev).
 
 Visit http://localhost:4000
 
@@ -38,10 +36,6 @@ Not using Dev Containers?
 docker compose up -d --build
 docker compose exec web bash -lc 'mix ecto.create'
 docker compose exec web bash -lc 'mix phx.server'
-
-Rename the Phoenix app (OTP + module)
-
-If you want stable resource names, set COMPOSE_PROJECT_NAME in a root .env file (not committed), e.g. COMPOSE_PROJECT_NAME=my_app
 
 Environment
 
@@ -55,6 +49,30 @@ PGPORT=5432
 SECRET_KEY_BASE=REPLACE_ME   # run `mix phx.gen.secret` to generate
 PHX_SERVER=true
 MIX_ENV=dev
+
+### Optional: Stable container/volume names
+
+By default, Docker Compose uses the **folder name** as the project name (prefix for containers/volumes/networks).
+If you want a fixed prefix (helpful for docs or multiple clones), set `COMPOSE_PROJECT_NAME`:
+
+cp .env.example .env
+# edit .env and set COMPOSE_PROJECT_NAME=my_app
+
+Recreate to apply the new name:
+
+docker compose down
+docker compose up -d --build
+docker compose ps
+
+One-off override (no .env file needed):
+
+COMPOSE_PROJECT_NAME=my_app docker compose up -d
+
+Changing it later? Old volumes/networks will stick around under the old name. Clean them if you like:
+
+docker compose down -v            # removes current project's containers/network/volumes
+docker volume ls | grep my_app    # list stragglers
+docker volume rm <vol>            # remove if desired
 
 What’s in this repo
 
